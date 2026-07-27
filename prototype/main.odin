@@ -41,13 +41,14 @@ main :: proc() {
         if rl.IsKeyDown(.S) { PX -= math.cos(PA) * MOVE_SPEED * dt; PY -= math.sin(PA) * MOVE_SPEED * dt }
 
         rl.BeginDrawing()
+        
+        
         rl.ClearBackground(rl.BLACK)
 
         for x: i32 = 0; x < WIDTH; x += 1 {
             angle := (PA - HALF_FOV) + (f32(x) / f32(WIDTH)) * FOV_RAD
             dist: f32 = 0.0
 
-            // Cast loop (safe from out-of-bounds due to sealed map border walls)
             for MAP[i32(PY + math.sin(angle) * dist) * MAP_W + i32(PX + math.cos(angle) * dist)] == 0 {
                 dist += STEP_SIZE
             }
@@ -57,6 +58,18 @@ main :: proc() {
             
             rl.DrawLine(x, HALF_HEIGHT - h/2, x, HALF_HEIGHT + h/2, rl.RED)
         }
+
+        // draw map
+        rl.DrawRectangle(0, 0, MAP_W*MAP_H, MAP_W*MAP_H, {00,00,0xFF,0xFF})
+        for y in 0..<MAP_H {
+            for x in 0..<MAP_W {
+                if MAP[y*MAP_W + x] == 1 {
+                    rl.DrawRectangle(i32(x*8), i32(y*8), 8, 8, {00,0xd3,00,0x70})
+                }
+            }
+        }
+        rl.DrawRectangle(i32(PX*8), i32(PY*8), 3, 3, rl.BLACK)
+
         rl.EndDrawing()
     }
     rl.CloseWindow();
