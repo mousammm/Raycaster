@@ -7,8 +7,8 @@ WIDTH      :: 640
 HEIGHT     :: 480
 HALF_HEIGHT:: HEIGHT / 2
 
-MOVE_SPEED :: 7.0
-ROT_SPEED  :: 5.0
+MOVE_SPEED :: 4.0
+ROT_SPEED  :: 3.0
 
 FOV_RAD    :: 60.0 * (math.PI / 180.0)
 HALF_FOV   :: FOV_RAD / 2.0
@@ -49,10 +49,6 @@ main :: proc() {
             ray_dir_x := math.cos(angle)
             ray_dir_y := math.sin(angle)
 
-            // Current integer square of the map the player is in
-            map_x := i32(PX)
-            map_y := i32(PY)
-
             // Distance the ray has to travel to go from 1 vertical/horizontal grid line to the next
             // Handled carefully to prevent division-by-zero if running parallel to an axis
             delta_dist_x := (ray_dir_x == 0) ? 1e30 : math.abs(1.0 / ray_dir_x)
@@ -66,6 +62,9 @@ main :: proc() {
             step_x: i32 = 0
             step_y: i32 = 0
 
+            // Current integer square of the map the player is in
+            map_x := i32(PX)
+            map_y := i32(PY)
             // Calculate step and initial side_dist
             if ray_dir_x < 0 {
                 step_x = -1
@@ -105,15 +104,10 @@ main :: proc() {
             } else {
                 perp_wall_dist = side_dist_y - delta_dist_y
             }
+            if perp_wall_dist < 0.01 do perp_wall_dist = 0.01 // clamp if standing right inside a wall
 
-            // Prevent division by zero if standing right inside a wall
-            if perp_wall_dist < 0.01 do perp_wall_dist = 0.01
-
-            // Calculate height of line to draw on screen
+            // draw wall
             h := i32(f32(HEIGHT) / perp_wall_dist)
-            if h > HEIGHT do h = HEIGHT
-            
-            // Choose color: give Y-facing walls a darker shade of red to create realistic 3D corners!
             wall_color := (side_hit == 1) ? rl.Color{80, 0, 0, 255} : rl.RED
             rl.DrawLine(x, HALF_HEIGHT - h/2, x, HALF_HEIGHT + h/2, wall_color)
         }
