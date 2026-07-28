@@ -1,4 +1,7 @@
 package main
+// DDA
+// Fish eye fix
+// walls with Y-facing give a darker shader
 
 import "core:math"
 import rl "vendor:raylib"
@@ -7,8 +10,8 @@ WIDTH      :: 640
 HEIGHT     :: 480
 HALF_HEIGHT:: HEIGHT / 2
 
-MOVE_SPEED :: 7.0
-ROT_SPEED  :: 5.0
+MOVE_SPEED :: 5.0
+ROT_SPEED  :: 3.0
 
 FOV_RAD    :: 60.0 * (math.PI / 180.0)
 HALF_FOV   :: FOV_RAD / 2.0

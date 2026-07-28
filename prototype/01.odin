@@ -1,4 +1,6 @@
 package main
+// Basic Raycaster with STEPING
+// Fish Eye Fix
 
 import "core:math"
 import rl "vendor:raylib"
@@ -57,6 +59,19 @@ main :: proc() {
             
             rl.DrawLine(x, HALF_HEIGHT - h/2, x, HALF_HEIGHT + h/2, rl.RED)
         }
+
+        // map START
+        rl.DrawRectangle(0, 0, MAP_W*MAP_H, MAP_W*MAP_H, {00,00,0xFF,0xFF})
+        for y in 0..<MAP_H {
+            for x in 0..<MAP_W {
+                if MAP[y*MAP_W + x] == 1 {
+                    rl.DrawRectangle(i32(x*8), i32(y*8), 8, 8, {00,0xd3,00,0x70})
+                }
+            }
+        }
+        rl.DrawRectangle(i32(PX*8), i32(PY*8), 3, 3, rl.BLACK)
+        // map END
+
         rl.EndDrawing()
     }
     rl.CloseWindow();
