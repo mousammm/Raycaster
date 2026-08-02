@@ -1,5 +1,7 @@
 package main
 
+// sliding collision
+
 import "core:math"
 import rl "vendor:raylib"
 
@@ -7,8 +9,8 @@ WIDTH      :: 640
 HEIGHT     :: 480
 HALF_HEIGHT:: HEIGHT / 2
 
-MOVE_SPEED :: 4.0
-ROT_SPEED  :: 3.0
+MOVE_SPEED :: 3.0
+ROT_SPEED  :: 2.0
 
 FOV_RAD    :: 60.0 * (math.PI / 180.0)
 HALF_FOV   :: FOV_RAD / 2.0
@@ -36,8 +38,46 @@ main :: proc() {
         
         if rl.IsKeyDown(.A) do PA -= ROT_SPEED * dt
         if rl.IsKeyDown(.D) do PA += ROT_SPEED * dt
-        if rl.IsKeyDown(.W) { PX += math.cos(PA) * MOVE_SPEED * dt; PY += math.sin(PA) * MOVE_SPEED * dt }
-        if rl.IsKeyDown(.S) { PX -= math.cos(PA) * MOVE_SPEED * dt; PY -= math.sin(PA) * MOVE_SPEED * dt }
+
+        BUFFER : f32 : 0.2 
+
+        if rl.IsKeyDown(.W) { 
+            move_x := math.cos(PA) * MOVE_SPEED * dt
+            move_y := math.sin(PA) * MOVE_SPEED * dt
+
+            // Calculate a slight forward buffer in the direction of movement
+            buffer_x := (move_x > 0) ? BUFFER : -BUFFER
+            buffer_y := (move_y > 0) ? BUFFER : -BUFFER
+
+            // Slide on X-axis: only move X if the future X tile is empty space (0)
+            if MAP[i32(PY) * MAP_W + i32(PX + move_x + buffer_x)] == 0 {
+                PX += move_x
+            }
+            // Slide on Y-axis: only move Y if the future Y tile is empty space (0)
+            if MAP[i32(PY + move_y + buffer_y) * MAP_W + i32(PX)] == 0 {
+                PY += move_y
+            }
+        }
+        
+        if rl.IsKeyDown(.S) { 
+            move_x := math.cos(PA) * MOVE_SPEED * dt
+            move_y := math.sin(PA) * MOVE_SPEED * dt
+
+            // Moving backward means the buffer points opposite to your gaze direction
+            buffer_x := (move_x > 0) ? -BUFFER : BUFFER
+            buffer_y := (move_y > 0) ? -BUFFER : BUFFER
+
+            // Slide on X-axis backward
+            if MAP[i32(PY) * MAP_W + i32(PX - move_x + buffer_x)] == 0 {
+                PX -= move_x
+            }
+            // Slide on Y-axis backward
+            if MAP[i32(PY - move_y + buffer_y) * MAP_W + i32(PX)] == 0 {
+                PY -= move_y
+            }
+        }
+        // -----------------------------
+
 
         rl.BeginDrawing()
         rl.ClearBackground(rl.BLACK)
@@ -65,6 +105,7 @@ main :: proc() {
             // Current integer square of the map the player is in
             map_x := i32(PX)
             map_y := i32(PY)
+
             // Calculate step and initial side_dist
             if ray_dir_x < 0 {
                 step_x = -1
@@ -104,9 +145,9 @@ main :: proc() {
             } else {
                 perp_wall_dist = side_dist_y - delta_dist_y
             }
-            if perp_wall_dist < 0.01 do perp_wall_dist = 0.01 // clamp if standing right inside a wall
+            if perp_wall_dist < 0.01 do perp_wall_dist = 0.01
 
-            // draw wall
+            // draw the walls
             h := i32(f32(HEIGHT) / perp_wall_dist)
             wall_color := (side_hit == 1) ? rl.Color{80, 0, 0, 255} : rl.RED
             rl.DrawLine(x, HALF_HEIGHT - h/2, x, HALF_HEIGHT + h/2, wall_color)

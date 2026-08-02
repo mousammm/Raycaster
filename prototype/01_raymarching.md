@@ -9,13 +9,6 @@ WIDTH      :: 640
 HEIGHT     :: 480
 HALF_HEIGHT:: HEIGHT / 2
 
-MOVE_SPEED :: 7.0
-ROT_SPEED  :: 5.0
-STEP_SIZE  :: 0.05
-
-FOV_RAD    :: 60.0 * (math.PI / 180.0)
-HALF_FOV   :: FOV_RAD / 2.0
-
 MAP_W, MAP_H :: 8, 8
 MAP := [MAP_W * MAP_H]i32{
     1,1,1,1,1,1,1,1,
@@ -29,6 +22,13 @@ MAP := [MAP_W * MAP_H]i32{
 }
 
 PX, PY, PA : f32 = 2.0, 2.0, 0.0
+
+MOVE_SPEED :: 7.0
+ROT_SPEED  :: 5.0
+STEP_SIZE  :: 0.05
+
+FOV_RAD    :: 60.0 * (math.PI / 180.0)
+HALF_FOV   :: FOV_RAD / 2.0
 
 main :: proc() {
     rl.InitWindow(WIDTH, HEIGHT, "Raycaster");
@@ -56,20 +56,29 @@ main :: proc() {
             h := i32(f32(HEIGHT) / dist) // fish eye
             // h := i32(f32(HEIGHT) / (dist * math.cos(angle - PA))) // fish eye fix
             if h > HEIGHT do h = HEIGHT
+
+            /* problem:::fixed-step raymarching (moving forward by a tiny fraction like 0.01 units every loop) is incredibly slow, a wall far away will force the loop to run thousands of times
+
+               ans:::this is where dda comes it gives the PlayerToWallDist in a few steps instead of stepping a fixed number.
+
+               and about the fish eye, it a division problem
+               lineHeight = (ScreenHeight / PlayerToWalldist) // this gives fish eye
+               lineHeight = (ScreenHeight / PlayerToWalldist * cos(RayAngle - PlayerAngle) // this fixes fish eye
+            */
             
             rl.DrawLine(x, HALF_HEIGHT - h/2, x, HALF_HEIGHT + h/2, rl.RED)
         }
 
         // map START
-        rl.DrawRectangle(0, 0, MAP_W*MAP_H, MAP_W*MAP_H, {00,00,0xFF,0xFF})
-        for y in 0..<MAP_H {
-            for x in 0..<MAP_W {
-                if MAP[y*MAP_W + x] == 1 {
-                    rl.DrawRectangle(i32(x*8), i32(y*8), 8, 8, {00,0xd3,00,0x70})
-                }
-            }
-        }
-        rl.DrawRectangle(i32(PX*8), i32(PY*8), 3, 3, rl.BLACK)
+        // rl.DrawRectangle(0, 0, MAP_W*MAP_H, MAP_W*MAP_H, {00,00,0xFF,0xFF})
+        // for y in 0..<MAP_H {
+        //     for x in 0..<MAP_W {
+        //         if MAP[y*MAP_W + x] == 1 {
+        //             rl.DrawRectangle(i32(x*8), i32(y*8), 8, 8, {00,0xd3,00,0x70})
+        //         }
+        //     }
+        // }
+        // rl.DrawRectangle(i32(PX*8), i32(PY*8), 3, 3, rl.BLACK)
         // map END
 
         rl.EndDrawing()
