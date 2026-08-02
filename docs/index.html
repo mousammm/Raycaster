@@ -109,9 +109,9 @@
      rayAngle = (playerAngle - halfFov) + (ray / screenWidth) * fov
      rayDist  = 0.0
 
-     for ( map[ (playerAngle + sin(rayAngle) * rayDist) 
-                + (playerAngle + cos(rayAngle) * rayDist) 
-                * mapWidth ] == 0 )
+     while (map[(int)(playerPosX + cos(rayAngle) * rayDist) +
+                (int)(playerPosY + sin(rayAngle) * rayDist) *
+                mapWidth ] == 0 )
      { rayDist += rayStepSize }
 
      lineHeight = (screenHeight / rayDist) <span>// this cause fish eye</span>
@@ -123,6 +123,7 @@
   }
 </pre>
   <p><span>FISH EYE FIX:</span><kbd>lineHeight = (screenHeight / (rayDist * cos(rayAngle - playerAngle)))<kbd></p>
+  <p>Add a max dist check to prevent infiinite loops, if shomehow the ray never reaches a wall.</p>
   <p id="u">loop the whole screen vertical strips from (0 to screenWidth).</p>
 <ul>
   <li><p><kbd>rayAngle</kbd>: need different angle for different ray this just tilts the ray aq to player left and right</p></li>
@@ -134,6 +135,119 @@
 
 </div>
 <!-- 1 end -->
+
+<!-- 2 start -->
+<h1>2. DDA(Digital Differential Analysis)</h1>
+<div id="Raycaster with DDA.">
+<p>NOTE ;; except for the vars everything are same except we wont need the rayStepSize.</p>
+
+<h2 id="opterLoop"><a href="#opterLoop">2.1 opterLoop</a></h2>
+<p>Let's start from outer loop of Raymarching alogrithm.</p>
+<pre id="code">
+  for (ray = 0; ray < screenWidth; ray++) {
+      // 1 get rayAngle and rayDist
+  
+      // 2 Calculate delta distance and step distance.
+          // delta dist : for 1 unit of x and y how much rayDist increases.
+          // side dist  : dist from the player to the closet wall.
+  
+      // 3 DDA Jump Loop
+  
+      // 4 draw the walls
+  }
+</pre>
+<p>just replace the Raymarching algo with step 2 and 3, in both algo we just need compute the distance of the player and the wall and store in rayDist.</p>
+
+<h2 id="deltaStepDist"><a href="#deltaStepDist">2.2 delta and Step Dist</a></h2>
+<p>lets start by computing the deltaDist  and stepDist.</p>
+<pre id="code">
+  // direction vectors of rayAngle
+  rayDirX = cos(rayAngle)
+  rayDirY = sin(rayAngle)
+  
+  // dist ray has to travel from player pos to the next grid line in x(vertically) and y.
+  // prevent division-by-zero if running parallel to an axis.
+  deltaDistX = (rayDirX == 0) ? 1e30 : abs(1.0 / rayDirX)
+  deltaDistY = (rayDirY == 0) ? 1e30 : abs(1.0 / rayDirY)
+  
+  // dist of ray from player to the closet grid lines (not wall).
+  sideDistX = 0.0
+  sideDistY = 0.0
+  
+  // direction to step in the grid map (-1[back] or +1[front]), need cause map is flat array.
+  stepX = 0
+  stepY = 0
+  
+  // current integer square of the map the player is in
+  mapX = int(playerPosX)
+  mapY = int(playerPosY)
+  
+  // compute step and initial sideDist
+  if (rayDirX < 0) {
+      stepX = -1
+      sideDistX = (playerPosX - mapX) * deltaDistX
+  } else {
+      stepX = 1
+      sideDistX = (mapX + 1.0 - playerPosX) * deltaDistX
+  }
+  
+  if (rayDirY < 0) {
+      stepY = -1
+      sideDistY = (playerPosY - mapY) * deltaDistY
+  } else {
+      stepY = 1
+      sideDistY = (mapY + 1.0 - playerPosY) * deltaDistY
+  }
+</pre>
+
+<h2 id="ddaLoop"><a href="#ddaLoop">2.3 DDA jump loop.</a></h2>
+<p>ddaLoop.</p>
+<pre id="code">
+  sideHit = 0 
+  // 0 : vertical wall (x-axis on grid line)
+  // 1 : horizontal wall (y-axis on grid line)
+
+  while (map[mapY * mapWidth + mapX] == 0) {
+      // jump to the next closest grid line (either X line or Y line)
+      if (sideDistX < sideDistY) {
+          sideDistX += deltaDistX
+          mapX += stepX
+          sideHit = 0
+      } else {
+          sideDistY += deltaDistY
+          mapY += stepY
+          sideHit = 1
+      }
+  }
+</pre>
+
+
+<h2 id="drawWall"><a href="#drawWall">2.4 Draw Wall.</a></h2>
+<p>draw wall.</p>
+<pre id="code">
+  // perpendicular distance to the wall (automatically fixes fish-eye)
+  perpWallDist = 0.0
+  if (sideHit == 0) {
+      perpWallDist = sideDistX - deltaDistX
+  } else {
+      perpWallDist = sideDistY - deltaDistY
+  }
+  if (perpWallDist < 0.01) { perpWallDist = 0.01 }
+  
+  lineHeight = screenHeight / perpWallDist
+  drawLine(ray, halfScreenHeight - lineHeight / 2,
+           ray, halfScreenHeight + lineHeight / 2,
+           RED)
+</pre>
+
+<p>give shadow to the horizontal or y-axis line on the grip map.</p>
+<pre id="code">
+wallColor = (sideHit == 1) ? DARKRED : RED
+drawLine(<>, <>, <>, <>, wallColor)
+</pre>
+
+</div>
+<!-- 2 end -->
 
 </body>
 </html>
