@@ -2,6 +2,15 @@
     font-family: 'LibreBaskerville';
     src: url('../asset/LibreBaskerville-Regular.ttf') format('truetype');
 }
+::selection {
+  background-color: #ffcc00;
+  color: #000000;
+}
+::-moz-selection {
+  background-color: #ffcc00;
+  color: #000000;
+}
+
 body {
     background: #181818;
     color: #F0F0F0;
@@ -11,6 +20,7 @@ body {
     font-size: 16px;
 }
 p {
+    padding-top: 20px;
     padding-bottom: 20px;
     line-height: 1.5;
 }
@@ -39,10 +49,19 @@ kbd {
     text-align: center;
     border-radius: 5px;
 }
-code {
+
+#code {
     display: inline-block;
     font-family: monospace;
+    background: #242424;
+    width: 100%;
+    color: #CCE0BB;
+    padding: 10px 0 10px 0;
 }
+#code span {
+  color: #00FF00;
+}
+
 ul {
     padding-bottom: 20px;
     list-style: inside square;
