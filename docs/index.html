@@ -9,17 +9,19 @@
 
 <!-- Heading -->
 <h1>Raycaster</h1>
-<p>Raycasting is a rendering technique to create a 3D perspective in a 2D map. Raycasting can go very fast, because only a calculation has to be done for every vertical line of the screen.</p>
-<p>The map is a 2D square grid, and each square can either be (0 = no wall), or a positive value (= a wall with a certain color or texture).</p>
-<p>Assume every vertical strip of the screen is x (i.e 0 to SCREEN_WIDTH) and it send out a ray that starts at the player location and with a direction that depends on both the player's looking direction, and the x-coordinate of the screen. Then, let this ray move forward on the 2D map, until it hits a map square that is a wall. If it hit a wall, calculate the distance of this hit point to the player, and use this distance to calculate how high this wall has to be drawn on the screen, the further away the wall, the smaller it's on screen, and the closer, the higher it appears to be. These are all 2D calculations.</p>
-<p>Source:&nbsp;<a href="https://github.com/mousammm/Raycaster">https://github.com/mousammm/Raycaster</a></p>
+<div class="para">
+  <p>Raycasting is a rendering technique to create a 3D perspective in a 2D map. Raycasting can go very fast, because only a calculation has to be done for every vertical line of the screen.</p>
+  <p>The map is a 2D square grid, and each square can either be (0 = no wall), or a positive value (= a wall with a certain color or texture).</p>
+  <p>Assume every vertical strip of the screen is x (i.e 0 to SCREEN_WIDTH) and it send out a ray that starts at the player location and with a direction that depends on both the player's looking direction, and the x-coordinate of the screen. Then, let this ray move forward on the 2D map, until it hits a map square that is a wall. If it hit a wall, calculate the distance of this hit point to the player, and use this distance to calculate how high this wall has to be drawn on the screen, the further away the wall, the smaller it's on screen, and the closer, the higher it appears to be. These are all 2D calculations.</p>
+  <p>Source:&nbsp;<a href="https://github.com/mousammm/Raycaster">https://github.com/mousammm/Raycaster</a></p>
+</div>
 
 <!-- 1 Start -->
-<h1>1. Raycasting with Raymarching.</h1>
+<h1>1. Raymarching</h1>
 <div id="Raycaster with Raymarching Alogrithm.">
-<h2 id="define"><a href="#define">1.1 Assumption</a></h2>
+<h2 id="vars"><a href="#vars">1.1 vars</a></h2>
 
-<p>World // Lets start by defining about the map and screen these are just integers.</p>
+<p>WORLD ;; Lets start by defining the map and screen these are just integers.</p>
 <pre id="code">
   screenWidth = 800
   screenHeight = 600
@@ -37,7 +39,7 @@
   }
 </pre>
 
-<p>Player // these are floats.</p>
+<p id="u">PLAYER ;; these are floats.</p>
 <pre id="code">
   playerPosX  = 2.0
   playerPosY  = 3.0
@@ -59,33 +61,33 @@
 <p><kbd>playerMoveSpeed</kbd>: how fast player will go up or dowm (will handle by W and S keys)</p>
 <p><kbd>playerRotSpeed</kbd>: how fast player will go left or right (will handle by A and D keys)</p>
 
-<p>Camera // ...</p>
+<p id="u">CAMERA.</p>
 <pre id="code">
   fov = 60.0 * (PI/180.0)
 </pre>
-<p><kbd>fov</kbd>: this is the field of view, initialize to 60 deg and convert it radian. The more the fov is the we can see in the world.</p>
+<p><kbd>fov</kbd>: this is the field of view, initialize to 60 deg and convert it radian.</p>
 
-<p>Raymarching stuff // ...</p>
+<p id="u">RAYMARCHING STUFF.</p>
 <pre id="code">
   rayStepSize = 0.05
 </pre>
 <p><kbd>rayStepSize</kbd>: as we are doing Raymarching, we need to define the steps the ray are goonna comes out of player. If we lower the step size to 0.01 we would see smooth edges but it can lower our performance.</p>
 
-<p>Extra // this are helper variables not particularly required</p>
+<p id="u">EXTRA ;; this are helper variables not particularly required.</p>
 <pre id="code">
   halfScreenHeight = screenHeight / 2
   halfFov = fov / 2
 </pre>
 
 <h2 id="Inputs"><a href="#Inputs">1.2 Inputs</a></h2>
-<p>Rotation // </p>
+<p>ROTATION.</p>
 <pre id="code">
   A { playerAngle -= playerRotSpeed * dt }
   D { playerAngle += playerRotSpeed * dt }
 </pre>
-<p><kbd>dt</kbd>: deltatime, time passes between 2 frames for smooth and uniform movenent across different fps. For if using raylib there is built in function, and if using SDL need to do the math for finding deltatime or use whatever you use.</p>
+<p><kbd>dt</kbd>: deltatime, time passed between 2 frames for smooth and uniform movenent across different fps.</p>
 
-<p>Forward and Backward // </p>
+<p id="u">FORWARD AND BACKWARD.</p>
 <pre id="code">
   W {
     playerPosX += cos(playerAngle) * playerMoveSpeed * dt
@@ -97,11 +99,11 @@
     playerPosY -= sin(playerAngle) * playerMoveSpeed * dt
   }
 </pre>
-<p> Basic trigonometry to to move in the direction the player is looking to. </p>
+<p> Basic trigonometry to to move in the direction the player is looking.</p>
 
 
 <h2 id="Raycasting"><a href="#Raycasting">1.3 Raycasting</a></h2>
-<p>rayyyyycaster // </p>
+<p>RAYCASTING WITH RAYMARCHING IMPLEMENTATION.</p>
 <pre id="code">
   for (ray = 0; ray < screenWidth; ray ++) {
      rayAngle = (playerAngle - halfFov) + (ray / screenWidth) * fov
@@ -120,22 +122,18 @@
               RED)
   }
 </pre>
-<p>We loop the whole screen vertical strips from (0 to screenWidth).</p>
-<p><kbd>rayAngle</kbd>: we also need different angle for different ray this just tilts the ray aq to player left and right</p>
-<p><kbd>rayDist</kbd>: this is distance from the player to the wall.</p>
-<p> we then check if the rayDist is on a empty space (i.e 0 on map) if yes we increase the ray with the rayStepSize, we will eventually hit the the wall and get the proper rayDist.</p>
-
-<p><kbd>lineHeight</kbd>: the height of the wall that will be used to draw on the screen.</p>
-<p>also need to put some guard as lineHeight can also get bigger then the screenHeight itself then we clamp lineHeight to screenHeight</p>
-
-<p>
-  <span>fish eye fix:</span>
-  <kbd>lineHeight = (screenHeight / (rayDist * cos(rayAngle - playerAngle)))<kbd> 
-</p>
+  <p><span>FISH EYE FIX:</span><kbd>lineHeight = (screenHeight / (rayDist * cos(rayAngle - playerAngle)))<kbd></p>
+  <p id="u">loop the whole screen vertical strips from (0 to screenWidth).</p>
+<ul>
+  <li><p><kbd>rayAngle</kbd>: need different angle for different ray this just tilts the ray aq to player left and right</p></li>
+  <li><p><kbd>rayDist</kbd>: this is distance from the player to the wall.</p></li>
+  <li><p>check if the rayDist is on a empty space (i.e 0 on map) if yes we increase the rayDist with the rayStepSize, we will eventually hit the the wall and get the total rayDist.</p></li>
+  <li><p><kbd>lineHeight</kbd>: the height of the wall that will be used to draw on the screen.</p></li>
+  <li><p>also need to put some guard as lineHeight can get bigger then the screenHeight itself then we clamp lineHeight to screenHeight</p></li>
+</ul>
 
 </div>
 <!-- 1 end -->
-
 
 </body>
 </html>

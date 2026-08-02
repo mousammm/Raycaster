@@ -19,9 +19,17 @@ body {
     max-width: 960px;
     font-size: 16px;
 }
+
+#u  { padding-top: 20px; }
+#ud { padding-top: 20px; }
+#d  { padding-bottom: 20px; }
+
+.para > *:not(:last-child) {
+  padding-bottom: 20px;
+}
+
+/* tags */
 p {
-    padding-top: 20px;
-    padding-bottom: 20px;
     line-height: 1.5;
 }
 h1 {
@@ -34,22 +42,23 @@ h2 {
     font-size: 28px;
     text-align: left;
     padding-top: 20px;
-    padding-bottom: 40px;
+    padding-bottom: 20px;
 }
-h2 a {
-    color: #F0F0F0;
-}
+h2 a { color: #F0F0F0; }
+
+/* inline code block */
 kbd {
     display: inline-block;
     font-family: monospace;
-    padding: 3px 5px;
+    padding: 3px 3px;
     background: #303030;
     line-height: 10px;
     vertical-align: middle;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 2px;
 }
 
+/* code block */
 #code {
     display: inline-block;
     font-family: monospace;
@@ -58,21 +67,17 @@ kbd {
     color: #CCE0BB;
     padding: 10px 0 10px 0;
 }
-#code span {
-  color: #00FF00;
-}
+#code span { color: #00FF00; }
 
 ul {
-    padding-bottom: 20px;
-    list-style: inside square;
+  padding-left: 1.5rem;
+  list-style-type: square;
 }
 ul li {
-    padding-bottom: 10px;
+  line-height: 1.5;
 }
-.plot {
-    width: 100%;
-    padding-bottom: 20px;
-}
+
+
 a {
     color: #9090EE;
     text-decoration: none;
