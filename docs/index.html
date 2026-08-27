@@ -43,9 +43,9 @@
 
 <p id="u">PLAYER ;; these are floats.</p>
 <pre id="code">
-  float posX   = 3.5f,a  posY   = 3.5f;      // starting pos of player inside the 2d map
-  float dirX   = -1.0f,  dirY   = 0.0f;      // initial direction the player looking as a vector.
-  float planeX = 0.0f,   planeY = 0.66f;     // always perpendicular to the direction vector and controls the field of view (FOV).
+  float posX   = 3.5f,a  posY   = 3.5f;
+  float dirX   = -1.0f,  dirY   = 0.0f;
+  float planeX = 0.0f,   planeY = 0.66f;
 
   float moveSpeed = dt * 4.0f; 
   float rotSpeed  = dt * 3.0f;  
@@ -60,97 +60,162 @@
                       |
                     PI/2 (down)
 </pre>
-<p><kbd>eg</kbd>: .....</p>
+<p><kbd>pos</kbd>: starting pos of player inside the 2d map </p>
+<p><kbd>dir</kbd>: initial direction the player looking as a vector. </p>
+<p><kbd>dir</kbd>: always perpendicular to the direction vector and controls the field of view (FOV).</p>
 
 <h2 id="Inputs"><a href="#Inputs">1.2 Inputs</a></h2>
 <p>ROTATION.</p>
 <pre id="code">
-  A {  }
-  D {  }
+  A { // left
+    float oldDirX = dirX;
+    dirX = dirX * cosf(rotSpeed) - dirY * sinf(rotSpeed);
+    dirY = oldDirX * sinf(rotSpeed) + dirY * cosf(rotSpeed);
+    float oldPlaneX = planeX;
+    planeX = planeX * cosf(rotSpeed) - planeY * sinf(rotSpeed);
+    planeY = oldPlaneX * sinf(rotSpeed) + planeY * cosf(rotSpeed);
+  }
+  D { // right
+    float oldDirX = dirX;
+    dirX = dirX * cosf(-rotSpeed) - dirY * sinf(-rotSpeed);
+    dirY = oldDirX * sinf(-rotSpeed) + dirY * cosf(-rotSpeed);
+    float oldPlaneX = planeX;
+    planeX = planeX * cosf(-rotSpeed) - planeY * sinf(-rotSpeed);
+    planeY = oldPlaneX * sinf(-rotSpeed) + planeY * cosf(-rotSpeed);
+  }
 </pre>
 <p><kbd>dt</kbd>: deltatime, time passed between 2 frames for smooth and uniform movenent across different fps.</p>
 
 <p id="u">FORWARD AND BACKWARD.</p>
 <pre id="code">
   W {
+    // no collision
     posX += dirX * moveSpeed;
     posY += dirY * moveSpeed;
+
+    // with collision
+    if (worldMap[(int)posY][(int)(posX + dirX * moveSpeed)] == 0) posX += dirX * moveSpeed;
+    if (worldMap[(int)(posY + dirY * moveSpeed)][(int)posX] == 0) posY += dirY * moveSpeed;
   }
 
   S {
+    // no collision
     posX -= dirX * moveSpeed;
     posY -= dirY * moveSpeed;
+
+    // with collision
+    if (worldMap[(int)posY][(int)(posX - dirX * moveSpeed)] == 0) posX -= dirX * moveSpeed;
+    if (worldMap[(int)(posY - dirY * moveSpeed)][(int)posX] == 0) posY -= dirY * moveSpeed;
   }
+
 </pre>
 
-<h2 id="Raycasting"><a href="#Raycasting">1.3 Raycasting</a></h2>
-<p>RAYCASTING WITH DDA IMPLEMENTATION.</p>
+<h2 id="DDAStart"><a href="#DDAStart">2.1 DDAStart</a></h2>
 <pre id="code">
   for (int x = 0; x < SCREEN_WIDTH; x++) {
+    // loop through every vertical column of the screen (from left: 0 to right: 639)
+    // to cast a single ray for each column
+
     float cameraX = 2.0f * (float)x / (float)SCREEN_WIDTH - 1.0f;
+    // cameraX: translate every x into a coordinate system ranging from (-1/0/+1)
+    // -1: left edge
+    //  0: center
+    // +1: right edge
+
     float rayDirX = dirX + planeX * cameraX;
     float rayDirY = dirY + planeY * cameraX;
+    // computes the final direction vector of the current ray
+    // by combining the player direction and the camera plane offset
+</pre>
 
+<h2 id="Grey"><a href="#Grey">2.2 Grey</a></h2>
+<pre id="code">
     int mapX = (int)posX;
     int mapY = (int)posY;
+    // truncates the player decimal position into whole numbers 
 
     float deltaDistX = (rayDirX == 0) ? 1e30f : fabsf(1.0f / rayDirX);
     float deltaDistY = (rayDirY == 0) ? 1e30f : fabsf(1.0f / rayDirY);
+    // deltaDist: distance between 2 grid cell, set to (1e30f) to prevent division-by-zero
 
     float sideDistX, sideDistY;
     int stepX, stepY;
-    int hit = 0; 
-    int side; // 0: X-side, 1: Y-side
+    int hit = 0;
+    int side;
 
-    // Calculate step and initial sideDist
-    if (rayDirX < 0) {
-      stepX = -1;
-      sideDistX = (posX - mapX) * deltaDistX;
-    } else {
-      stepX = 1;
-      sideDistX = (mapX + 1.0f - posX) * deltaDistX;
-    }
-    if (rayDirY < 0) {
-      stepY = -1;
-      sideDistY = (posY - mapY) * deltaDistY;
-    } else {
-      stepY = 1;
-      sideDistY = (mapY + 1.0f - posY) * deltaDistY;
-    }
+    // sideDist: distance from player to the first grid cell
+    // step: direction for X(-1:left, +1:right) Y(-1:up, +1:down)
+    // hit:  0(empty)  1(wall)
+    // side: 0(X-side) 1(Y-side)
+</pre>
 
-    // Perform DDA
+<h2 id="StepDist"><a href="#StepDist">2.3 StepDist</a></h2>
+<pre id="code">
+    if (rayDirX < 0) { stepX = -1; sideDistX = (posX - mapX) * deltaDistX; }
+    else             { stepX = 1;  sideDistX = (mapX + 1.0f - posX) * deltaDistX; }
+    if (rayDirY < 0) { stepY = -1; sideDistY = (posY - mapY) * deltaDistY; }
+    else             { stepY = 1;  sideDistY = (mapY + 1.0f - posY) * deltaDistY; }
+    // it calculate the initial distance from player position to the first grid cell
+</pre>
+
+<h2 id="DDALoop"><a href="#DDALoop">2.4 DDALoop</a></h2>
+<pre id="code">
     while (hit == 0) {
-      if (sideDistX < sideDistY) {
-        sideDistX += deltaDistX;
-        mapX += stepX;
-        side = 0;
-      } else {
-        sideDistY += deltaDistY;
-        mapY += stepY;
-        side = 1;
-      }
+      if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+      else                       { sideDistY += deltaDistY; mapY += stepY; side = 1; }
       if (worldMap[mapY][mapX] > 0) hit = 1;
     }
+    // loop continuously, till hit a wall i.e 1
+    // if the next vertical grid line is closer than the next horizontal line,
+       the ray steps 1 unit along the X-axis, side = 0 tracks that an east/west facing wall was struck.
+    // else, the ray steps 1 unit along the Y-axis, side = 1 tracks that a north/south facing wall was struck.
+    // if the newly entered grid cell is a wall, set hit = 1 and breaks the DDA loop.
+</pre>
 
+<h2 id="WallHeight"><a href="#WallHeight">2.5 WallHeight</a></h2>
+<pre id="code">
     float perpWallDist;
     if (side == 0) perpWallDist = (sideDistX - deltaDistX);
     else           perpWallDist = (sideDistY - deltaDistY);
+    // at the last loop of DDA we entered the wall and increased deltaDist
+    // which causes the fish eye, to fix we minus deltaDist
 
     int lineHeight = (int)(SCREEN_HEIGHT / perpWallDist);
+    // lineHeight: how tall the vertical stripe of the wall should look on the monitor screen
+    // closer : small walls
+    // far    : taller walls
 
     int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
     if (drawStart < 0) drawStart = 0;
     int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
     if (drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
 
-    if (side == 1) {
-      SDL_SetRenderDrawColor(renderer, 150, 0, 0, 255); // Darker red for Y walls
-    } else {
-      SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255); // Brighter red for X walls
-    }
-    SDL_RenderDrawLine(renderer, x, drawStart, x, drawEnd);
-  }
+    // drawStart: the starting pos of the vertical line from center, clamp to 0 if it goes out of screen
+    // drawEnd: the end pos of the vertical line from center, clamp to (SCREEN_HEIGHT-1) if it goes out of screen
+
+    ............................
+    .                          .
+    .                          .
+    .    - drawStart           .
+    .    .                     .
+    .    .                     .
+    .----- center -------------.
+    .    .                     .
+    .    .                     .
+    .    - drawEnd             .
+    .                          .
+    .                          .
+    ............................
+
 </pre>
+
+<h2 id="DrawWall"><a href="#DrawWall">2.6 DrawWall</a></h2>
+<pre id="code">
+    if (side == 1) { color = darker color for Y walls }
+    else           { color = lighter color for X walls }
+    DrawLine(x, drawStart, x, drawEnd);
+</pre>
+
 
 </div>
 <!-- 1 end -->
