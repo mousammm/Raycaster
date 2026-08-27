@@ -17,35 +17,38 @@
 </div>
 
 <!-- 1 Start -->
-<h1>1. Raymarching</h1>
-<div id="Raycaster with Raymarching Alogrithm.">
+
+<h1>1. DDA(Digital Differential Analysis)</h1>
+<div id="Raycaster with DDA.">
 <h2 id="vars"><a href="#vars">1.1 vars</a></h2>
 
 <p>WORLD ;; Lets start by defining the map and screen these are just integers.</p>
 <pre id="code">
-  screenWidth = 800
-  screenHeight = 600
-  mapWidth = 8
-  mapHeight = 8
-  map[mapWidth*mapHeight] = {
-      1,1,1,1,1,1,1,1,
-      1,0,0,0,0,0,0,1,
-      1,0,0,0,0,0,0,1,
-      1,0,0,1,0,0,0,1,
-      1,0,0,0,0,0,0,1,
-      1,0,0,0,0,0,0,1,
-      1,0,0,0,0,0,0,1,
-      1,1,1,1,1,1,1,1,
-  }
+  #define PI 3.1415926535f
+  #define SCREEN_WIDTH 640
+  #define SCREEN_HEIGHT 480
+  #define MAP_WIDTH 8
+  #define MAP_HEIGHT 8
+  int worldMap[MAP_HEIGHT][MAP_WIDTH] = {
+      {1,1,1,1,1,1,1,1},
+      {1,0,0,0,0,0,0,1},
+      {1,0,1,1,0,1,0,1},
+      {1,0,0,0,0,0,0,1},
+      {1,0,0,0,0,1,0,1},
+      {1,0,1,0,0,0,0,1},
+      {1,0,0,0,0,0,0,1},
+      {1,1,1,1,1,1,1,1}
+  };
 </pre>
 
 <p id="u">PLAYER ;; these are floats.</p>
 <pre id="code">
-  playerPosX  = 2.0
-  playerPosY  = 3.0
-  playerAngle = 0.0
-  playerMoveSpeed = 5.0
-  playerRotSpeed  = 3.0
+  float posX   = 3.5f,a  posY   = 3.5f;      // starting pos of player inside the 2d map
+  float dirX   = -1.0f,  dirY   = 0.0f;      // initial direction the player looking as a vector.
+  float planeX = 0.0f,   planeY = 0.66f;     // always perpendicular to the direction vector and controls the field of view (FOV).
+
+  float moveSpeed = dt * 4.0f; 
+  float rotSpeed  = dt * 3.0f;  
 
                     3PI/2 (up)
                       |
@@ -57,197 +60,100 @@
                       |
                     PI/2 (down)
 </pre>
-<p><kbd>playerAngle</kbd>: the direction the player is looking in (it is in RADIAN). We are initializing our player to look in the right direction.</p>
-<p><kbd>playerMoveSpeed</kbd>: how fast player will go up or dowm (will handle by W and S keys)</p>
-<p><kbd>playerRotSpeed</kbd>: how fast player will go left or right (will handle by A and D keys)</p>
-
-<p id="u">CAMERA.</p>
-<pre id="code">
-  fov = 60.0 * (PI/180.0)
-</pre>
-<p><kbd>fov</kbd>: this is the field of view, initialize to 60 deg and convert it radian.</p>
-
-<p id="u">RAYMARCHING STUFF.</p>
-<pre id="code">
-  rayStepSize = 0.05
-</pre>
-<p><kbd>rayStepSize</kbd>: as we are doing Raymarching, we need to define the steps the ray are goonna comes out of player. If we lower the step size to 0.01 we would see smooth edges but it can lower our performance.</p>
-
-<p id="u">EXTRA ;; this are helper variables not particularly required.</p>
-<pre id="code">
-  halfScreenHeight = screenHeight / 2
-  halfFov = fov / 2
-</pre>
+<p><kbd>eg</kbd>: .....</p>
 
 <h2 id="Inputs"><a href="#Inputs">1.2 Inputs</a></h2>
 <p>ROTATION.</p>
 <pre id="code">
-  A { playerAngle -= playerRotSpeed * dt }
-  D { playerAngle += playerRotSpeed * dt }
+  A {  }
+  D {  }
 </pre>
 <p><kbd>dt</kbd>: deltatime, time passed between 2 frames for smooth and uniform movenent across different fps.</p>
 
 <p id="u">FORWARD AND BACKWARD.</p>
 <pre id="code">
   W {
-    playerPosX += cos(playerAngle) * playerMoveSpeed * dt
-    playerPosY += sin(playerAngle) * playerMoveSpeed * dt
+    posX += dirX * moveSpeed;
+    posY += dirY * moveSpeed;
   }
 
   S {
-    playerPosX -= cos(playerAngle) * playerMoveSpeed * dt
-    playerPosY -= sin(playerAngle) * playerMoveSpeed * dt
+    posX -= dirX * moveSpeed;
+    posY -= dirY * moveSpeed;
   }
 </pre>
-<p> Basic trigonometry to to move in the direction the player is looking.</p>
-
 
 <h2 id="Raycasting"><a href="#Raycasting">1.3 Raycasting</a></h2>
-<p>RAYCASTING WITH RAYMARCHING IMPLEMENTATION.</p>
+<p>RAYCASTING WITH DDA IMPLEMENTATION.</p>
 <pre id="code">
-  for (ray = 0; ray < screenWidth; ray ++) {
-     rayAngle = (playerAngle - halfFov) + (ray / screenWidth) * fov
-     rayDist  = 0.0
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    float cameraX = 2.0f * (float)x / (float)SCREEN_WIDTH - 1.0f;
+    float rayDirX = dirX + planeX * cameraX;
+    float rayDirY = dirY + planeY * cameraX;
 
-     while (map[(int)(playerPosX + cos(rayAngle) * rayDist) +
-                (int)(playerPosY + sin(rayAngle) * rayDist) *
-                mapWidth ] == 0 )
-     { rayDist += rayStepSize }
+    int mapX = (int)posX;
+    int mapY = (int)posY;
 
-     lineHeight = (screenHeight / rayDist) // this cause fish eye
-     if (lineHeight > screenHeight) { lineHeight = screenHeight } 
-      
-     drawLine(ray, halfScreenHeight - lineHeight / 2,
-              ray, halfScreenHeight + lineHeight / 2,
-              RED)
+    float deltaDistX = (rayDirX == 0) ? 1e30f : fabsf(1.0f / rayDirX);
+    float deltaDistY = (rayDirY == 0) ? 1e30f : fabsf(1.0f / rayDirY);
+
+    float sideDistX, sideDistY;
+    int stepX, stepY;
+    int hit = 0; 
+    int side; // 0: X-side, 1: Y-side
+
+    // Calculate step and initial sideDist
+    if (rayDirX < 0) {
+      stepX = -1;
+      sideDistX = (posX - mapX) * deltaDistX;
+    } else {
+      stepX = 1;
+      sideDistX = (mapX + 1.0f - posX) * deltaDistX;
+    }
+    if (rayDirY < 0) {
+      stepY = -1;
+      sideDistY = (posY - mapY) * deltaDistY;
+    } else {
+      stepY = 1;
+      sideDistY = (mapY + 1.0f - posY) * deltaDistY;
+    }
+
+    // Perform DDA
+    while (hit == 0) {
+      if (sideDistX < sideDistY) {
+        sideDistX += deltaDistX;
+        mapX += stepX;
+        side = 0;
+      } else {
+        sideDistY += deltaDistY;
+        mapY += stepY;
+        side = 1;
+      }
+      if (worldMap[mapY][mapX] > 0) hit = 1;
+    }
+
+    float perpWallDist;
+    if (side == 0) perpWallDist = (sideDistX - deltaDistX);
+    else           perpWallDist = (sideDistY - deltaDistY);
+
+    int lineHeight = (int)(SCREEN_HEIGHT / perpWallDist);
+
+    int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
+    if (drawStart < 0) drawStart = 0;
+    int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
+    if (drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
+
+    if (side == 1) {
+      SDL_SetRenderDrawColor(renderer, 150, 0, 0, 255); // Darker red for Y walls
+    } else {
+      SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255); // Brighter red for X walls
+    }
+    SDL_RenderDrawLine(renderer, x, drawStart, x, drawEnd);
   }
 </pre>
-  <p>FISH EYE FIX:<kbd>lineHeight = (screenHeight / (rayDist * cos(rayAngle - playerAngle)))<kbd></p>
-  <p>Add a max dist check to prevent infiinite loops, if shomehow the ray never reaches a wall.</p>
-  <p id="u">loop the whole screen vertical strips from (0 to screenWidth).</p>
-<ul>
-  <li><p><kbd>rayAngle</kbd>: need different angle for different ray this just tilts the ray aq to player left and right</p></li>
-  <li><p><kbd>rayDist</kbd>: this is distance from the player to the wall.</p></li>
-  <li><p>check if the rayDist is on a empty space (i.e 0 on map) if yes we increase the rayDist with the rayStepSize, we will eventually hit the the wall and get the total rayDist.</p></li>
-  <li><p><kbd>lineHeight</kbd>: the height of the wall that will be used to draw on the screen.</p></li>
-  <li><p>also need to put some guard as lineHeight can get bigger then the screenHeight itself then we clamp lineHeight to screenHeight</p></li>
-</ul>
 
 </div>
 <!-- 1 end -->
-
-<!-- 2 start -->
-<h1>2. DDA(Digital Differential Analysis)</h1>
-<div id="Raycaster with DDA.">
-<p>NOTE ;; except for the vars everything are same except we wont need the rayStepSize.</p>
-
-<h2 id="opterLoop"><a href="#opterLoop">2.1 opterLoop</a></h2>
-<p>Let's start from outer loop of Raymarching alogrithm.</p>
-<pre id="code">
-  for (ray = 0; ray < screenWidth; ray++) {
-      // 1 get rayAngle and rayDist
-  
-      // 2 Calculate delta distance and step distance.
-          // delta dist : for 1 unit of x and y how much rayDist increases.
-          // side dist  : dist from the player to the closet wall.
-  
-      // 3 DDA Jump Loop
-  
-      // 4 draw the walls
-  }
-</pre>
-<p>just replace the Raymarching algo with step 2 and 3, in both algo we just need compute the distance of the player and the wall and store in rayDist.</p>
-
-<h2 id="deltaStepDist"><a href="#deltaStepDist">2.2 delta and Step Dist</a></h2>
-<p>lets start by computing the deltaDist  and stepDist.</p>
-<pre id="code">
-  // direction vectors of rayAngle
-  rayDirX = cos(rayAngle)
-  rayDirY = sin(rayAngle)
-  
-  // dist ray has to travel from player pos to the next grid line in x(vertically) and y.
-  // prevent division-by-zero if running parallel to an axis.
-  deltaDistX = (rayDirX == 0) ? 1e30 : abs(1.0 / rayDirX)
-  deltaDistY = (rayDirY == 0) ? 1e30 : abs(1.0 / rayDirY)
-  
-  // dist of ray from player to the closet grid lines (not wall).
-  sideDistX = 0.0
-  sideDistY = 0.0
-  
-  // direction to step in the grid map (-1[back] or +1[front]), need cause map is flat array.
-  stepX = 0
-  stepY = 0
-  
-  // current integer square of the map the player is in
-  mapX = int(playerPosX)
-  mapY = int(playerPosY)
-  
-  // compute step and initial sideDist
-  if (rayDirX < 0) {
-      stepX = -1
-      sideDistX = (playerPosX - mapX) * deltaDistX
-  } else {
-      stepX = 1
-      sideDistX = (mapX + 1.0 - playerPosX) * deltaDistX
-  }
-  
-  if (rayDirY < 0) {
-      stepY = -1
-      sideDistY = (playerPosY - mapY) * deltaDistY
-  } else {
-      stepY = 1
-      sideDistY = (mapY + 1.0 - playerPosY) * deltaDistY
-  }
-</pre>
-
-<h2 id="ddaLoop"><a href="#ddaLoop">2.3 DDA jump loop.</a></h2>
-<p>ddaLoop.</p>
-<pre id="code">
-  sideHit = 0 
-  // 0 : vertical wall (x-axis on grid line)
-  // 1 : horizontal wall (y-axis on grid line)
-
-  while (map[mapY * mapWidth + mapX] == 0) {
-      // jump to the next closest grid line (either X line or Y line)
-      if (sideDistX < sideDistY) {
-          sideDistX += deltaDistX
-          mapX += stepX
-          sideHit = 0
-      } else {
-          sideDistY += deltaDistY
-          mapY += stepY
-          sideHit = 1
-      }
-  }
-</pre>
-
-
-<h2 id="drawWall"><a href="#drawWall">2.4 Draw Wall.</a></h2>
-<p>draw wall.</p>
-<pre id="code">
-  // perpendicular distance to the wall (automatically fixes fish-eye)
-  perpWallDist = 0.0
-  if (sideHit == 0) {
-      perpWallDist = sideDistX - deltaDistX
-  } else {
-      perpWallDist = sideDistY - deltaDistY
-  }
-  if (perpWallDist < 0.01) { perpWallDist = 0.01 }
-  
-  lineHeight = screenHeight / perpWallDist
-  drawLine(ray, halfScreenHeight - lineHeight / 2,
-           ray, halfScreenHeight + lineHeight / 2,
-           RED)
-</pre>
-
-<p>give shadow to the horizontal or y-axis line on the grip map.</p>
-<pre id="code">
-wallColor = (sideHit == 1) ? DARKRED : RED
-drawLine(<>, <>, <>, <>, wallColor)
-</pre>
-
-</div>
-<!-- 2 end -->
 
 </body>
 </html>
