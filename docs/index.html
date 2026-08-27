@@ -16,6 +16,10 @@
   <p>Source:&nbsp;<a href="https://github.com/mousammm/Raycaster">https://github.com/mousammm/Raycaster</a></p>
 </div>
 
+<p id="u">Refrences:</p>
+<p>Lodev Raycaster Tut:&nbsp;<a href="https://lodev.org/cgtutor/raycasting.html">https://lodev.org/cgtutor/raycasting</a></p>
+<p>DDA javidYT:&nbsp;<a href="https://youtu.be/NbSee-XM7WA?si=gSjsMix46rDHj3wm">https://youtu.be/NbSee-XM7WA?si=gSjsMix46rDHj3wm</a></p>
+
 <!-- 1 Start -->
 
 <h1>1. DDA(Digital Differential Analysis)</h1>
@@ -41,7 +45,7 @@
   };
 </pre>
 
-<p id="u">PLAYER ;; these are floats.</p>
+<p id="u">PLAYER</p>
 <pre id="code">
   float posX   = 3.5f,a  posY   = 3.5f;
   float dirX   = -1.0f,  dirY   = 0.0f;
@@ -63,6 +67,7 @@
 <p><kbd>pos</kbd>: starting pos of player inside the 2d map </p>
 <p><kbd>dir</kbd>: initial direction the player looking as a vector. </p>
 <p><kbd>dir</kbd>: always perpendicular to the direction vector and controls the field of view (FOV).</p>
+<p><kbd>dt</kbd>: deltatime, time passed between 2 frames for smooth and uniform movenent across different fps.</p>
 
 <h2 id="Inputs"><a href="#Inputs">1.2 Inputs</a></h2>
 <p>ROTATION.</p>
@@ -84,7 +89,6 @@
     planeY = oldPlaneX * sinf(-rotSpeed) + planeY * cosf(-rotSpeed);
   }
 </pre>
-<p><kbd>dt</kbd>: deltatime, time passed between 2 frames for smooth and uniform movenent across different fps.</p>
 
 <p id="u">FORWARD AND BACKWARD.</p>
 <pre id="code">
